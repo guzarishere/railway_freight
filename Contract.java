@@ -24,7 +24,7 @@ public class Contract {
     public Contract(String date, double weight, String cargo_type, String delivery_time,
                     String departure_st, String arrival_st, double cost, Customer customer) {
         if (!Pattern.matches("^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-\\d{4}$", date)) {
-            throw new IllegalArgumentException("Incorrect date format (must be DD-MM-YY)");
+            throw new IllegalArgumentException("Incorrect date format (must be DD-MM-YYYY)");
         }
 
         if (weight < MIN_WEIGHT || weight > MAX_WEIGHT) {
@@ -37,6 +37,16 @@ public class Contract {
 
         if (!Pattern.matches("^(\\d+)\\s+(\\d+)\\s+(\\d+)$", delivery_time)) {
             throw new IllegalArgumentException("Incorrect delivery time format (must be Days Hours Minutes)");
+        }
+
+        String[] time = delivery_time.split(" ");
+        long days = Long.parseLong(time[0]);
+        long hours = Long.parseLong(time[1]);
+        long minutes = Long.parseLong(time[2]);
+
+        if (days < 0 || hours < 0 || hours > 23 || minutes < 0 || minutes > 59 ||
+                (days == 0 && hours == 0 && minutes == 0)) {
+            throw new IllegalArgumentException("Incorrect delivery time value");
         }
 
         if (!Pattern.matches("^[A-Za-zА-Яа-яЁёЇїІіЄєҐґ0-9\\s'`-]+$", departure_st)) {
@@ -59,10 +69,7 @@ public class Contract {
         this.date = date;
         this.weight = Math.ceil(weight*1000)/1000.0;
         this.cargo_type = cargo_type;
-
-        String[] time = delivery_time.split(" ");
-        this.delivery_time = Duration.ofDays(Long.parseLong(time[0])).plusHours(Long.parseLong(time[1])).plusMinutes(Long.parseLong(time[2]));
-
+        this.delivery_time = Duration.ofDays(days).plusHours(hours).plusMinutes(minutes);
         this.departure_st = departure_st;
         this.arrival_st = arrival_st;
         this.cost = Math.ceil(cost*100)/100.0;
@@ -136,7 +143,16 @@ public class Contract {
         }
 
         String[] time = delivery_time.split(" ");
-        this.delivery_time = Duration.ofDays(Long.parseLong(time[0])).plusHours(Long.parseLong(time[1])).plusMinutes(Long.parseLong(time[2]));
+        long days = Long.parseLong(time[0]);
+        long hours = Long.parseLong(time[1]);
+        long minutes = Long.parseLong(time[2]);
+
+        if (days < 0 || hours < 0 || hours > 23 || minutes < 0 || minutes > 59 ||
+                (days == 0 && hours == 0 && minutes == 0)) {
+            throw new IllegalArgumentException("Incorrect delivery time value");
+        }
+
+        this.delivery_time = Duration.ofDays(days).plusHours(hours).plusMinutes(minutes);
     }
 
     public void setDeparture_st(String departure_st) {
@@ -172,7 +188,7 @@ public class Contract {
 
     public void setDate(String date) {
         if (!Pattern.matches("^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-\\d{4}$", date)) {
-            throw new IllegalArgumentException("Incorrect date format (must be DD-MM-YY)");
+            throw new IllegalArgumentException("Incorrect date format (must be DD-MM-YYYY)");
         }
 
         this.date = date;

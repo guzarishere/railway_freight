@@ -300,6 +300,16 @@ public class App extends JFrame {
         JTextField nameField = new JTextField();
         JTextField workExpField = new JTextField();
 
+        companyNameField.setDocument(new JTextFieldLimit(50));
+        streetField.setDocument(new JTextFieldLimit(50));
+        houseField.setDocument(new JTextFieldLimit(10));
+        postcodeField.setDocument(new JTextFieldLimit(10));
+        cityField.setDocument(new JTextFieldLimit(50));
+        countryField.setDocument(new JTextFieldLimit(50));
+        phoneNumberField.setDocument(new JTextFieldLimit(16));
+        nameField.setDocument(new JTextFieldLimit(50));
+        workExpField.setDocument(new JTextFieldLimit(2));
+
         JPanel panel = new JPanel(new GridLayout(0, 2));
         panel.add(new JLabel("Company Name:"));
         panel.add(companyNameField);
@@ -323,6 +333,12 @@ public class App extends JFrame {
         int result = JOptionPane.showConfirmDialog(null, panel, "Create Dispatcher", JOptionPane.OK_CANCEL_OPTION);
         if (result == JOptionPane.OK_OPTION) {
             try {
+                if (companyNameField.getText().trim().isEmpty() || streetField.getText().trim().isEmpty() || houseField.getText().trim().isEmpty() ||
+                postcodeField.getText().trim().isEmpty() || cityField.getText().trim().isEmpty() || countryField.getText().trim().isEmpty() ||
+                phoneNumberField.getText().trim().isEmpty() || nameField.getText().trim().isEmpty() || workExpField.getText().trim().isEmpty()) {
+                    throw new IllegalArgumentException("All fields must be filled");
+                }
+
                 Address address = new Address(
                         streetField.getText(),
                         houseField.getText(),
@@ -357,15 +373,35 @@ public class App extends JFrame {
 
         if (dispatcher == null) throw new NullPointerException("Dispatcher not found");
 
-        JTextField companyNameField = new JTextField(dispatcher.getCompany_name());
-        JTextField streetField = new JTextField(dispatcher.getAddress().getStreet());
-        JTextField houseField = new JTextField(dispatcher.getAddress().getHouse());
-        JTextField postcodeField = new JTextField(dispatcher.getAddress().getPostcode());
-        JTextField cityField = new JTextField(dispatcher.getAddress().getCity());
-        JTextField countryField = new JTextField(dispatcher.getAddress().getCountry());
-        JTextField phoneNumberField = new JTextField(dispatcher.getPhone_number());
-        JTextField nameField = new JTextField(dispatcher.getName());
-        JTextField workExpField = new JTextField(String.valueOf(dispatcher.getWork_exp()));
+        JTextField companyNameField = new JTextField();
+        JTextField streetField = new JTextField();
+        JTextField houseField = new JTextField();
+        JTextField postcodeField = new JTextField();
+        JTextField cityField = new JTextField();
+        JTextField countryField = new JTextField();
+        JTextField phoneNumberField = new JTextField();
+        JTextField nameField = new JTextField();
+        JTextField workExpField = new JTextField();
+
+        companyNameField.setDocument(new JTextFieldLimit(50));
+        streetField.setDocument(new JTextFieldLimit(50));
+        houseField.setDocument(new JTextFieldLimit(10));
+        postcodeField.setDocument(new JTextFieldLimit(10));
+        cityField.setDocument(new JTextFieldLimit(50));
+        countryField.setDocument(new JTextFieldLimit(50));
+        phoneNumberField.setDocument(new JTextFieldLimit(16));
+        nameField.setDocument(new JTextFieldLimit(50));
+        workExpField.setDocument(new JTextFieldLimit(2));
+
+        companyNameField.setText(dispatcher.getCompany_name());
+        streetField.setText(dispatcher.getAddress().getStreet());
+        houseField.setText(dispatcher.getAddress().getHouse());
+        postcodeField.setText(dispatcher.getAddress().getPostcode());
+        cityField.setText(dispatcher.getAddress().getCity());
+        countryField.setText(dispatcher.getAddress().getCountry());
+        phoneNumberField.setText(dispatcher.getPhone_number());
+        nameField.setText(dispatcher.getName());
+        workExpField.setText(String.valueOf(dispatcher.getWork_exp()));
 
         JPanel panel = new JPanel(new GridLayout(0, 2));
         panel.add(new JLabel("Company Name:"));
@@ -390,6 +426,12 @@ public class App extends JFrame {
         int result = JOptionPane.showConfirmDialog(null, panel, "Edit Dispatcher", JOptionPane.OK_CANCEL_OPTION);
         if (result == JOptionPane.OK_OPTION) {
             try {
+                if (companyNameField.getText().trim().isEmpty() || streetField.getText().trim().isEmpty() || houseField.getText().trim().isEmpty() ||
+                        postcodeField.getText().trim().isEmpty() || cityField.getText().trim().isEmpty() || countryField.getText().trim().isEmpty() ||
+                        phoneNumberField.getText().trim().isEmpty() || nameField.getText().trim().isEmpty() || workExpField.getText().trim().isEmpty()) {
+                    throw new IllegalArgumentException("All fields must be filled");
+                }
+
                 Address address = new Address(
                         streetField.getText(),
                         houseField.getText(),
@@ -430,6 +472,14 @@ public class App extends JFrame {
         JTextField countryField = new JTextField();
         JTextField phoneNumberField = new JTextField();
 
+        companyNameField.setDocument(new JTextFieldLimit(50));
+        streetField.setDocument(new JTextFieldLimit(50));
+        houseField.setDocument(new JTextFieldLimit(10));
+        postcodeField.setDocument(new JTextFieldLimit(10));
+        cityField.setDocument(new JTextFieldLimit(50));
+        countryField.setDocument(new JTextFieldLimit(50));
+        phoneNumberField.setDocument(new JTextFieldLimit(16));
+
         JPanel panel = new JPanel(new GridLayout(0, 2));
         panel.add(new JLabel("Company Name:"));
         panel.add(companyNameField);
@@ -449,6 +499,12 @@ public class App extends JFrame {
         int result = JOptionPane.showConfirmDialog(null, panel, "Create Customer", JOptionPane.OK_CANCEL_OPTION);
         if (result == JOptionPane.OK_OPTION) {
             try {
+                if (companyNameField.getText().trim().isEmpty() || streetField.getText().trim().isEmpty() || houseField.getText().trim().isEmpty() ||
+                        postcodeField.getText().trim().isEmpty() || cityField.getText().trim().isEmpty() || countryField.getText().trim().isEmpty() ||
+                        phoneNumberField.getText().trim().isEmpty()) {
+                    throw new IllegalArgumentException("All fields must be filled");
+                }
+
                 Address address = new Address(
                         streetField.getText(),
                         houseField.getText(),
@@ -487,13 +543,29 @@ public class App extends JFrame {
 
         if (customer == null) throw new NullPointerException("Customer not found");
 
-        JTextField companyNameField = new JTextField(customer.getCompany_name());
-        JTextField streetField = new JTextField(customer.getAddress().getStreet());
-        JTextField houseField = new JTextField(customer.getAddress().getHouse());
-        JTextField postcodeField = new JTextField(customer.getAddress().getPostcode());
-        JTextField cityField = new JTextField(customer.getAddress().getCity());
-        JTextField countryField = new JTextField(customer.getAddress().getCountry());
-        JTextField phoneNumberField = new JTextField(customer.getPhone_number());
+        JTextField companyNameField = new JTextField();
+        JTextField streetField = new JTextField();
+        JTextField houseField = new JTextField();
+        JTextField postcodeField = new JTextField();
+        JTextField cityField = new JTextField();
+        JTextField countryField = new JTextField();
+        JTextField phoneNumberField = new JTextField();
+
+        companyNameField.setDocument(new JTextFieldLimit(50));
+        streetField.setDocument(new JTextFieldLimit(50));
+        houseField.setDocument(new JTextFieldLimit(10));
+        postcodeField.setDocument(new JTextFieldLimit(10));
+        cityField.setDocument(new JTextFieldLimit(50));
+        countryField.setDocument(new JTextFieldLimit(50));
+        phoneNumberField.setDocument(new JTextFieldLimit(16));
+
+        companyNameField.setText(customer.getCompany_name());
+        streetField.setText(customer.getAddress().getStreet());
+        houseField.setText(customer.getAddress().getHouse());
+        postcodeField.setText(customer.getAddress().getPostcode());
+        cityField.setText(customer.getAddress().getCity());
+        countryField.setText(customer.getAddress().getCountry());
+        phoneNumberField.setText(customer.getPhone_number());
 
         JPanel panel = new JPanel(new GridLayout(0, 2));
         panel.add(new JLabel("Company Name:"));
@@ -514,6 +586,12 @@ public class App extends JFrame {
         int result = JOptionPane.showConfirmDialog(null, panel, "Edit Customer", JOptionPane.OK_CANCEL_OPTION);
         if (result == JOptionPane.OK_OPTION) {
             try {
+                if (companyNameField.getText().trim().isEmpty() || streetField.getText().trim().isEmpty() || houseField.getText().trim().isEmpty() ||
+                        postcodeField.getText().trim().isEmpty() || cityField.getText().trim().isEmpty() || countryField.getText().trim().isEmpty() ||
+                        phoneNumberField.getText().trim().isEmpty()) {
+                    throw new IllegalArgumentException("All fields must be filled");
+                }
+
                 Address address = new Address(
                         streetField.getText(),
                         houseField.getText(),
@@ -549,6 +627,14 @@ public class App extends JFrame {
         JTextField departureStationField = new JTextField();
         JTextField arrivalStationField = new JTextField();
         JTextField costField = new JTextField();
+
+        dateField.setDocument(new JTextFieldLimit(10));
+        weightField.setDocument(new JTextFieldLimit(10));
+        cargoTypeField.setDocument(new JTextFieldLimit(50));
+        deliveryTimeField.setDocument(new JTextFieldLimit(10));
+        departureStationField.setDocument(new JTextFieldLimit(50));
+        arrivalStationField.setDocument(new JTextFieldLimit(50));
+        costField.setDocument(new JTextFieldLimit(20));
 
         List<Customer> availableCustomers = ListQueriesHandler.getCustomers().stream()
                 .filter(customer -> customer.getContract_id().equals(""))
@@ -607,6 +693,12 @@ public class App extends JFrame {
                 double cost = Double.parseDouble(costField.getText());
                 Customer customer = (Customer) customerComboBox.getSelectedItem();
 
+                if (date.trim().isEmpty() || weightField.getText().trim().isEmpty() || cargoType.trim().isEmpty() ||
+                deliveryTime.trim().isEmpty() || departureStation.trim().isEmpty() || arrivalStation.trim().isEmpty() ||
+                costField.getText().trim().isEmpty() || customer == null) {
+                    throw new IllegalArgumentException("All fields must be filled");
+                }
+
                 Contract contract = new Contract(
                         date, weight, cargoType, deliveryTime, departureStation, arrivalStation, cost, customer
                 );
@@ -639,13 +731,29 @@ public class App extends JFrame {
             formattedDeliveryTime = "0 0 0";
         }
 
-        JTextField dateField = new JTextField(contract.getDate());
-        JTextField weightField = new JTextField(String.valueOf(contract.getWeight()));
-        JTextField cargoTypeField = new JTextField(contract.getCargo_type());
-        JTextField deliveryTimeField = new JTextField(formattedDeliveryTime);
-        JTextField departureStationField = new JTextField(contract.getDeparture_st());
-        JTextField arrivalStationField = new JTextField(contract.getArrival_st());
-        JTextField costField = new JTextField(String.valueOf(contract.getCost()));
+        JTextField dateField = new JTextField();
+        JTextField weightField = new JTextField();
+        JTextField cargoTypeField = new JTextField();
+        JTextField deliveryTimeField = new JTextField();
+        JTextField departureStationField = new JTextField();
+        JTextField arrivalStationField = new JTextField();
+        JTextField costField = new JTextField();
+
+        dateField.setDocument(new JTextFieldLimit(10));
+        weightField.setDocument(new JTextFieldLimit(10));
+        cargoTypeField.setDocument(new JTextFieldLimit(50));
+        deliveryTimeField.setDocument(new JTextFieldLimit(10));
+        departureStationField.setDocument(new JTextFieldLimit(50));
+        arrivalStationField.setDocument(new JTextFieldLimit(50));
+        costField.setDocument(new JTextFieldLimit(20));
+
+        dateField.setText(contract.getDate());
+        weightField.setText(String.valueOf(contract.getWeight()));
+        cargoTypeField.setText(contract.getCargo_type());
+        deliveryTimeField.setText(formattedDeliveryTime);
+        departureStationField.setText(contract.getDeparture_st());
+        arrivalStationField.setText(contract.getArrival_st());
+        costField.setText(String.valueOf(contract.getCost()));
 
         JPanel panel = new JPanel(new GridLayout(0, 2));
         panel.add(new JLabel("Date (DD-MM-YYYY):"));
@@ -673,6 +781,12 @@ public class App extends JFrame {
                 String departureStation = departureStationField.getText();
                 String arrivalStation = arrivalStationField.getText();
                 double cost = Double.parseDouble(costField.getText());
+
+                if (date.trim().isEmpty() || weightField.getText().trim().isEmpty() || cargoType.trim().isEmpty() ||
+                        deliveryTime.trim().isEmpty() || departureStation.trim().isEmpty() || arrivalStation.trim().isEmpty() ||
+                        costField.getText().trim().isEmpty()) {
+                    throw new IllegalArgumentException("All fields must be filled");
+                }
 
                 contract.setDate(date);
                 contract.setWeight(weight);
