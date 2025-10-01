@@ -68,4 +68,12 @@ public class Dispatcher extends Counterparty {
         Address address = new Address(parts[1], parts[2], parts[3], parts[4], parts[5]);
         return new Dispatcher(parts[0], address, parts[6], parts[7], Integer.parseInt(parts[8]));
     }
+
+    public void copyFrom(Dispatcher other) {
+        setCompany_name(other.getCompany_name());
+        address.copyFrom(other.getAddress());
+        setPhone_number(other.getPhone_number());
+        setName(other.getName());
+        setWork_exp(other.getWork_exp());
+    }
 }

@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.PrintWriter;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
@@ -205,262 +206,185 @@ public class App extends JFrame {
     }
 
     private void loadListsFromFile() {
-        if (!ListQueriesHandler.getDispatchers().isEmpty() ||
-                !ListQueriesHandler.getCustomers().isEmpty() ||
-                !ListQueriesHandler.getContracts().isEmpty()) {
+        if (!confirmReplaceCurrentData()) return;
 
-            int confirm = JOptionPane.showConfirmDialog(
-                    this,
-                    "Do you want to save the current lists before loading a new file?",
-                    "Save Current Data",
-                    JOptionPane.YES_NO_CANCEL_OPTION,
-                    JOptionPane.QUESTION_MESSAGE
-            );
+        File selectedFile = chooseFile("Choose a file to load data from", JFileChooser.OPEN_DIALOG);
+        if (selectedFile == null) return;
 
-            if (confirm == JOptionPane.CANCEL_OPTION) {
-                return;
-            } else if (confirm == JOptionPane.YES_OPTION) {
-                saveListsToFile();
-            }
+        try {
+            loadDataFromFile(selectedFile);
+            refreshUILists();
+            JOptionPane.showMessageDialog(this, "Data loaded successfully from:\n" + selectedFile.getAbsolutePath());
+        } catch (Exception e) {
+            clearAllLists();
+            JOptionPane.showMessageDialog(this, "Error loading file: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
+    }
 
+    private boolean confirmReplaceCurrentData() {
+        if (ListQueriesHandler.getDispatchers().isEmpty() &&
+                ListQueriesHandler.getCustomers().isEmpty() &&
+                ListQueriesHandler.getContracts().isEmpty()) return true;
+
+        int confirm = JOptionPane.showConfirmDialog(
+                this, "Do you want to save the current lists before loading a new file?",
+                "Save Current Data", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+
+        if (confirm == JOptionPane.CANCEL_OPTION) return false;
+        if (confirm == JOptionPane.YES_OPTION) saveListsToFile();
+        return true;
+    }
+
+    private File chooseFile(String title, int dialogType) {
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Choose a file to load data from");
+        fileChooser.setDialogTitle(title);
+        int returnValue = (dialogType == JFileChooser.OPEN_DIALOG) ?
+                fileChooser.showOpenDialog(this) : fileChooser.showSaveDialog(this);
+        return (returnValue == JFileChooser.APPROVE_OPTION) ? fileChooser.getSelectedFile() : null;
+    }
 
-        int returnValue = fileChooser.showOpenDialog(this);
-        if (returnValue == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = fileChooser.getSelectedFile();
+    private void loadDataFromFile(File file) throws Exception {
+        if (!file.getName().endsWith(".txt")) throw new IllegalArgumentException("Invalid file format");
 
-            if (!selectedFile.getName().endsWith(".txt")) {
-                JOptionPane.showMessageDialog(this, "Invalid file format. Please select a .txt file.", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+        clearAllLists();
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            parseFileContents(reader);
+        }
+    }
 
-            try (BufferedReader reader = new BufferedReader(new FileReader(selectedFile))) {
-                ListQueriesHandler.getDispatchers().clear();
-                ListQueriesHandler.getCustomers().clear();
-                ListQueriesHandler.getContracts().clear();
-
-                String line;
-                String currentSection = "";
-
-                while ((line = reader.readLine()) != null) {
-                    line = line.trim();
-
-                    if (line.equals("=== Dispatchers ===")) {
-                        currentSection = "dispatchers";
-                    } else if (line.equals("=== Customers ===")) {
-                        currentSection = "customers";
-                    } else if (line.equals("=== Contracts ===")) {
-                        currentSection = "contracts";
-                    } else if (!line.isEmpty()) {
-                        switch (currentSection) {
-                            case "dispatchers" -> ListQueriesHandler.getDispatchers().add(Dispatcher.fromDataString(line));
-                            case "customers" -> ListQueriesHandler.getCustomers().add(Customer.fromDataString(line));
-                            case "contracts" -> ListQueriesHandler.getContracts().add(Contract.fromDataString(line));
-                            default -> {
-                                ListQueriesHandler.getDispatchers().clear();
-                                ListQueriesHandler.getCustomers().clear();
-                                ListQueriesHandler.getContracts().clear();
-                                JOptionPane.showMessageDialog(this, "Invalid file format. Unexpected data outside sections.", "Error", JOptionPane.ERROR_MESSAGE);
-                                return;
-                            }
-                        }
-                    }
-                }
-
-                if (ListQueriesHandler.getDispatchers().isEmpty() &&
-                        ListQueriesHandler.getCustomers().isEmpty() &&
-                        ListQueriesHandler.getContracts().isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "The file is empty or has no valid data.", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
-                updateDispatcherList();
-                updateCustomerList();
-                updateContractList();
-                JOptionPane.showMessageDialog(this, "Data loaded successfully from:\n" + selectedFile.getAbsolutePath());
-            } catch (Exception e) {
-                ListQueriesHandler.getDispatchers().clear();
-                ListQueriesHandler.getCustomers().clear();
-                ListQueriesHandler.getContracts().clear();
-                JOptionPane.showMessageDialog(this, "Error loading file: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    private void parseFileContents(BufferedReader reader) throws Exception {
+        String line, currentSection = "";
+        while ((line = reader.readLine()) != null) {
+            line = line.trim();
+            switch (line) {
+                case "=== Dispatchers ===" -> currentSection = "dispatchers";
+                case "=== Customers ===" -> currentSection = "customers";
+                case "=== Contracts ===" -> currentSection = "contracts";
+                default -> parseEntity(line, currentSection);
             }
         }
+    }
+
+    private void parseEntity(String line, String section) {
+        if (line.isEmpty()) return;
+        switch (section) {
+            case "dispatchers" -> ListQueriesHandler.getDispatchers().add(Dispatcher.fromDataString(line));
+            case "customers" -> ListQueriesHandler.getCustomers().add(Customer.fromDataString(line));
+            case "contracts" -> ListQueriesHandler.getContracts().add(Contract.fromDataString(line));
+            default -> throw new IllegalArgumentException("Unexpected data outside sections.");
+        }
+    }
+
+    private void clearAllLists() {
+        ListQueriesHandler.getDispatchers().clear();
+        ListQueriesHandler.getCustomers().clear();
+        ListQueriesHandler.getContracts().clear();
+    }
+
+    private void refreshUILists() {
+        updateDispatcherList();
+        updateCustomerList();
+        updateContractList();
     }
 
     private void createDispatcher() {
-        JTextField companyNameField = new JTextField();
-        JTextField streetField = new JTextField();
-        JTextField houseField = new JTextField();
-        JTextField postcodeField = new JTextField();
-        JTextField cityField = new JTextField();
-        JTextField countryField = new JTextField();
-        JTextField phoneNumberField = new JTextField();
-        JTextField nameField = new JTextField();
-        JTextField workExpField = new JTextField();
-
-        companyNameField.setDocument(new JTextFieldLimit(50));
-        streetField.setDocument(new JTextFieldLimit(50));
-        houseField.setDocument(new JTextFieldLimit(10));
-        postcodeField.setDocument(new JTextFieldLimit(10));
-        cityField.setDocument(new JTextFieldLimit(50));
-        countryField.setDocument(new JTextFieldLimit(50));
-        phoneNumberField.setDocument(new JTextFieldLimit(16));
-        nameField.setDocument(new JTextFieldLimit(50));
-        workExpField.setDocument(new JTextFieldLimit(2));
-
-        JPanel panel = new JPanel(new GridLayout(0, 2));
-        panel.add(new JLabel("Company Name:"));
-        panel.add(companyNameField);
-        panel.add(new JLabel("Street:"));
-        panel.add(streetField);
-        panel.add(new JLabel("House:"));
-        panel.add(houseField);
-        panel.add(new JLabel("Postcode:"));
-        panel.add(postcodeField);
-        panel.add(new JLabel("City:"));
-        panel.add(cityField);
-        panel.add(new JLabel("Country:"));
-        panel.add(countryField);
-        panel.add(new JLabel("Phone Number:"));
-        panel.add(phoneNumberField);
-        panel.add(new JLabel("Dispatcher Name:"));
-        panel.add(nameField);
-        panel.add(new JLabel("Work Experience (0 <= years <= " + Dispatcher.MAX_WORK_EXP + "):"));
-        panel.add(workExpField);
-
+        JPanel panel = buildDispatcherForm(null);  // separate method for building the form
         int result = JOptionPane.showConfirmDialog(null, panel, "Create Dispatcher", JOptionPane.OK_CANCEL_OPTION);
         if (result == JOptionPane.OK_OPTION) {
             try {
-                if (companyNameField.getText().trim().isEmpty() || streetField.getText().trim().isEmpty() || houseField.getText().trim().isEmpty() ||
-                postcodeField.getText().trim().isEmpty() || cityField.getText().trim().isEmpty() || countryField.getText().trim().isEmpty() ||
-                phoneNumberField.getText().trim().isEmpty() || nameField.getText().trim().isEmpty() || workExpField.getText().trim().isEmpty()) {
-                    throw new IllegalArgumentException("All fields must be filled");
+                Dispatcher dispatcher = buildDispatcherFromForm(panel);  // separate method for building the object
+                if (isDuplicateDispatcher(dispatcher)) { // separate method checking for duplicates
+                    throw new IllegalArgumentException("Such dispatcher already exists");
                 }
-
-                Address address = new Address(
-                        streetField.getText(),
-                        houseField.getText(),
-                        postcodeField.getText(),
-                        cityField.getText(),
-                        countryField.getText()
-                );
-                Dispatcher dispatcher = new Dispatcher(
-                        companyNameField.getText(),
-                        address,
-                        phoneNumberField.getText(),
-                        nameField.getText(),
-                        Integer.parseInt(workExpField.getText())
-                );
-                Dispatcher duplicate = ListQueriesHandler.getDispatchers().stream().filter(d -> d.equals(dispatcher)).findAny().orElse(null);
-                if (duplicate != null) throw new IllegalArgumentException("Such dispatcher already exists");
                 ListQueriesHandler.getDispatchers().add(dispatcher);
                 updateDispatcherList();
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(null, "Incorrect work experience format", "Error", JOptionPane.ERROR_MESSAGE);
-            } catch (IllegalArgumentException ex) {
+            } catch (Exception ex) {
                 JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
-    private void editDispatcher(String dispatcherStr) {
-        Dispatcher dispatcher = ListQueriesHandler.getDispatchers().stream()
-                .filter(d -> d.toString().equals(dispatcherStr))
-                .findFirst()
-                .orElse(null);
+    private JTextField createLimitedField(String value, int limit) {
+        JTextField field = new JTextField();
+        field.setDocument(new JTextFieldLimit(limit));
+        field.setText(value != null ? value : "");
+        return field;
+    }
 
-        if (dispatcher == null) throw new NullPointerException("Dispatcher not found");
-
-        JTextField companyNameField = new JTextField();
-        JTextField streetField = new JTextField();
-        JTextField houseField = new JTextField();
-        JTextField postcodeField = new JTextField();
-        JTextField cityField = new JTextField();
-        JTextField countryField = new JTextField();
-        JTextField phoneNumberField = new JTextField();
-        JTextField nameField = new JTextField();
-        JTextField workExpField = new JTextField();
-
-        companyNameField.setDocument(new JTextFieldLimit(50));
-        streetField.setDocument(new JTextFieldLimit(50));
-        houseField.setDocument(new JTextFieldLimit(10));
-        postcodeField.setDocument(new JTextFieldLimit(10));
-        cityField.setDocument(new JTextFieldLimit(50));
-        countryField.setDocument(new JTextFieldLimit(50));
-        phoneNumberField.setDocument(new JTextFieldLimit(16));
-        nameField.setDocument(new JTextFieldLimit(50));
-        workExpField.setDocument(new JTextFieldLimit(2));
-
-        companyNameField.setText(dispatcher.getCompany_name());
-        streetField.setText(dispatcher.getAddress().getStreet());
-        houseField.setText(dispatcher.getAddress().getHouse());
-        postcodeField.setText(dispatcher.getAddress().getPostcode());
-        cityField.setText(dispatcher.getAddress().getCity());
-        countryField.setText(dispatcher.getAddress().getCountry());
-        phoneNumberField.setText(dispatcher.getPhone_number());
-        nameField.setText(dispatcher.getName());
-        workExpField.setText(String.valueOf(dispatcher.getWork_exp()));
+    private JPanel buildDispatcherForm(Dispatcher existing) {
+        JTextField companyNameField = createLimitedField(existing != null ? existing.getCompany_name() : "", 50);
+        JTextField streetField = createLimitedField(existing != null ? existing.getAddress().getStreet() : "", 50);
+        JTextField houseField = createLimitedField(existing != null ? existing.getAddress().getHouse() : "", 10);
+        JTextField postcodeField = createLimitedField(existing != null ? existing.getAddress().getPostcode() : "", 10);
+        JTextField cityField = createLimitedField(existing != null ? existing.getAddress().getCity() : "", 50);
+        JTextField countryField = createLimitedField(existing != null ? existing.getAddress().getCountry() : "", 50);
+        JTextField phoneNumberField = createLimitedField(existing != null ? existing.getPhone_number() : "", 16);
+        JTextField nameField = createLimitedField(existing != null ? existing.getName() : "", 50);
+        JTextField workExpField = createLimitedField(existing != null ? String.valueOf(existing.getWork_exp()) : "", 2);
 
         JPanel panel = new JPanel(new GridLayout(0, 2));
-        panel.add(new JLabel("Company Name:"));
-        panel.add(companyNameField);
-        panel.add(new JLabel("Street:"));
-        panel.add(streetField);
-        panel.add(new JLabel("House:"));
-        panel.add(houseField);
-        panel.add(new JLabel("Postcode:"));
-        panel.add(postcodeField);
-        panel.add(new JLabel("City:"));
-        panel.add(cityField);
-        panel.add(new JLabel("Country:"));
-        panel.add(countryField);
-        panel.add(new JLabel("Phone Number:"));
-        panel.add(phoneNumberField);
-        panel.add(new JLabel("Dispatcher Name:"));
-        panel.add(nameField);
+        panel.add(new JLabel("Company Name:")); panel.add(companyNameField);
+        panel.add(new JLabel("Street:")); panel.add(streetField);
+        panel.add(new JLabel("House:")); panel.add(houseField);
+        panel.add(new JLabel("Postcode:")); panel.add(postcodeField);
+        panel.add(new JLabel("City:")); panel.add(cityField);
+        panel.add(new JLabel("Country:")); panel.add(countryField);
+        panel.add(new JLabel("Phone Number:")); panel.add(phoneNumberField);
+        panel.add(new JLabel("Dispatcher Name:")); panel.add(nameField);
         panel.add(new JLabel("Work Experience (0 <= years <= " + Dispatcher.MAX_WORK_EXP + "):"));
         panel.add(workExpField);
 
+        panel.putClientProperty("fields", new JTextField[]{
+                companyNameField, streetField, houseField, postcodeField, cityField,
+                countryField, phoneNumberField, nameField, workExpField
+        });
+
+        return panel;
+    }
+
+    private Dispatcher buildDispatcherFromForm(JPanel panel) {
+        JTextField[] fields = (JTextField[]) panel.getClientProperty("fields");
+        if (Arrays.stream(fields).anyMatch(f -> f.getText().trim().isEmpty())) {
+            throw new IllegalArgumentException("All fields must be filled");
+        }
+        return new Dispatcher(
+                fields[0].getText(),
+                new Address(fields[1].getText(), fields[2].getText(), fields[3].getText(), fields[4].getText(), fields[5].getText()),
+                fields[6].getText(),
+                fields[7].getText(),
+                Integer.parseInt(fields[8].getText())
+        );
+    }
+
+    private boolean isDuplicateDispatcher(Dispatcher dispatcher) {
+        return ListQueriesHandler.getDispatchers().stream().anyMatch(d -> d.equals(dispatcher));
+    }
+
+    private void editDispatcher(String dispatcherStr) {
+        Dispatcher dispatcher = findDispatcher(dispatcherStr);
+        if (dispatcher == null) throw new NullPointerException("Dispatcher not found");
+
+        JPanel panel = buildDispatcherForm(dispatcher);
         int result = JOptionPane.showConfirmDialog(null, panel, "Edit Dispatcher", JOptionPane.OK_CANCEL_OPTION);
         if (result == JOptionPane.OK_OPTION) {
             try {
-                if (companyNameField.getText().trim().isEmpty() || streetField.getText().trim().isEmpty() || houseField.getText().trim().isEmpty() ||
-                        postcodeField.getText().trim().isEmpty() || cityField.getText().trim().isEmpty() || countryField.getText().trim().isEmpty() ||
-                        phoneNumberField.getText().trim().isEmpty() || nameField.getText().trim().isEmpty() || workExpField.getText().trim().isEmpty()) {
-                    throw new IllegalArgumentException("All fields must be filled");
+                Dispatcher updated = buildDispatcherFromForm(panel);
+                if (isDuplicateDispatcher(updated)) {
+                    throw new IllegalArgumentException("Such dispatcher already exists");
                 }
-
-                Address address = new Address(
-                        streetField.getText(),
-                        houseField.getText(),
-                        postcodeField.getText(),
-                        cityField.getText(),
-                        countryField.getText()
-                );
-
-                // Check for duplicates
-                Dispatcher duplicate = ListQueriesHandler.getDispatchers().stream()
-                        .filter(d -> d.getCompany_name().equals(companyNameField.getText()) &&
-                                d.getAddress().equals(address) && d.getName().equals(nameField.getText()) &&
-                                d.getPhone_number().equals(phoneNumberField.getText()) && d.getWork_exp() == Integer.parseInt(workExpField.getText()))
-                        .findAny()
-                        .orElse(null);
-                if (duplicate != null) throw new IllegalArgumentException("Such dispatcher already exists");
-
-                dispatcher.setCompany_name(companyNameField.getText());
-                dispatcher.setAddress(address);
-                dispatcher.setPhone_number(phoneNumberField.getText());
-                dispatcher.setName(nameField.getText());
-                dispatcher.setWork_exp(Integer.parseInt(workExpField.getText()));
+                dispatcher.copyFrom(updated);
                 updateDispatcherList();
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(null, "Incorrect work experience format", "Error", JOptionPane.ERROR_MESSAGE);
-            } catch (IllegalArgumentException ex) {
+            } catch (Exception ex) {
                 JOptionPane.showMessageDialog(null, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+    private Dispatcher findDispatcher(String dispatcherStr) {
+        return ListQueriesHandler.getDispatchers().stream()
+                .filter(d -> d.toString().equals(dispatcherStr))
+                .findFirst()
+                .orElse(null);
     }
 
     private void createCustomer() {

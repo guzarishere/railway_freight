@@ -95,6 +95,14 @@ public class Address {
         this.country = country;
     }
 
+    public void copyFrom(Address other) {
+        setStreet(other.getStreet());
+        setHouse(other.getHouse());
+        setPostcode(other.getPostcode());
+        setCity(other.getCity());
+        setCountry(other.getCountry());
+    }
+
     @Override
     public String toString() {
         return street + " " + house + ", " + postcode + " " + city + ", " + country;
